@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,4 +15,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Users routes
     Route::resource('users', UserController::class);
+
+    // Posts routes
+    Route::post('/posts/{id}', [PostController::class, 'get']);
+    Route::post('/posts', [PostController::class, 'create']);
+    Route::post('/posts/{id}', [PostController::class, 'update']);
+    Route::get('/posts/author/{author}', [PostController::class, 'getListByUser']);
 });
