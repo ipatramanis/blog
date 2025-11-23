@@ -25,7 +25,7 @@ class PostCreateRequest extends FormRequest
             'title' => ['required', 'unique:posts', 'max:255'],
             'slug' => ['required', 'max:150'],
             'content' => ['nullable', 'max:500'],
-            'category' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'tags' => ['nullable', 'array', 'exists:tags,id'],
         ];
     }
