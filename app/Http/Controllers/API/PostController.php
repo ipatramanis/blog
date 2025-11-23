@@ -5,11 +5,11 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PostCreateRequest;
 use App\Http\Requests\PostListByUserRequest;
+use App\Http\Requests\PostUpdateRequest;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -31,7 +31,6 @@ class PostController extends Controller
 
             // Create new post
             $post = new Post($validated);
-            $post->category_id = $validated['category'] ?? null;
             $post->author = auth()->id();
             $post->save();
 
@@ -57,17 +56,69 @@ class PostController extends Controller
     /**
      * Update a post
      *
-     * @param Request $request
+     * @param PostUpdateRequest $request
      * @param Post $post
      *
-     * @return void
+     * @return JsonResponse
      */
-    public function update(Request $request, Post $post)
+    public function update(PostUpdateRequest $request, Post $post)
     {
         try {
+            $validated = $request->validated();
 
+            DB::beginTransaction();
+
+            $post->fill($validated);
+
+            // Add tag "edited" if content has changed
+            if ($post->isDirty('content')) {
+                $validated['tags'][] = Tag::EDITED_TAG;
+            }
+
+            // Update tags if field is present
+            if (isset($validated['tags'])) {
+                $post->tags()->sync($validated['tags']);
+            }
+
+            DB::commit();
+
+            $response = ['post' => $post];
+
+            return response()->json($response, 200);
         } catch (Throwable $e) {
+            DB::rollBack();
+
             logger()->error($e->getMessage());
+
+            return response()->json(['message' => 'Post was not updated. An error occurred.'], 500);
+        }
+    }
+
+    /**
+     * Delete a post
+     *
+     * @param Post $post
+     *
+     * @return JsonResponse
+     */
+    public function delete(Post $post)
+    {
+        try {
+            DB::beginTransaction();
+
+            $post->delete();
+
+            DB::commit();
+
+            $response = ['message' => 'Post was deleted successfully.'];
+
+            return response()->json($response, 204);
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            logger()->error($e->getMessage());
+
+            return response()->json(['message' => 'Post was not deleted. An error occurred.'], 500);
         }
     }
 
@@ -75,16 +126,16 @@ class PostController extends Controller
      * Get list of all posts by user
      *
      * @param PostListByUserRequest $request
-     * @param User $author
+     * @param User $user
      *
      * @return void
      */
-    public function getListByUser(PostListByUserRequest $request, User $author)
+    public function getListByUser(PostListByUserRequest $request, User $user)
     {
         try {
 
         } catch (Throwable $e) {
-            logger()->error($e->getMessage());
+
         }
     }
 
