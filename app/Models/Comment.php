@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 class Comment extends Model
 {
     /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'user_id',
+        'post_id',
+        'content',
+    ];
+
+    /**
      * Get the post that is associated with one comment
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
