@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class PostController extends Controller
@@ -126,6 +127,44 @@ class PostController extends Controller
     }
 
     /**
+     * Get single post by id and slug
+     *
+     * @param int $post_id
+     * @param string $slug
+     *
+     * @return JsonResponse
+     */
+    public function get(int $post_id, string $slug)
+    {
+        try {
+            DB::beginTransaction();
+
+            $post = Post::whereLike('slug', sprintf('%%%s%%', $slug))
+                ->where('id', $post_id)
+                ->with(['author', 'tags'])
+                ->get();
+
+            DB::commit();
+
+            // Throw not found exception
+            if ($post->isEmpty()) {
+                throw new NotFoundHttpException('Post not found.', code: 404);
+            }
+
+            return response()->json($post, 200);
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            logger()->error($e->getMessage());
+
+            $codeStatus = $e->getCode() == 404 ? $e->getCode() : 500;
+            $message = $codeStatus == 404 ? $e->getMessage() : 'Failed to retrieve a post. An error occurred.';
+
+            return response()->json(['message' => $message], $codeStatus);
+        }
+    }
+
+    /**
      * Get a list of all posts, filter results by author, category and/or tags
      *
      * @param PostListRequest $request
@@ -181,18 +220,34 @@ class PostController extends Controller
     /**
      * Get list of all posts by user
      *
-     * @param PostListByUserRequest $request
-     * @param User $user
+     * @param int $user_id
      *
-     * @return void
+     * @return JsonResponse
      */
-    public function getListByUser(PostListByUserRequest $request, User $user)
+    public function getListByUser(int $user_id)
     {
         try {
+            DB::beginTransaction();
 
+            $posts = Post::whereHas('author', function ($query) use ($user_id) {
+                $query->where('id', $user_id);
+            })->get();
+
+            DB::commit();
+
+            // Throw not found exception
+            if ($posts->isEmpty()) {
+                throw new NotFoundHttpException('No posts found for this user.', code: 404);
+            }
+
+            return response()->json($posts, 200);
         } catch (Throwable $e) {
+            logger()->error($e->getMessage());
 
+            $codeStatus = $e->getCode() == 404 ? $e->getCode() : 500;
+            $message = $codeStatus == 404 ? $e->getMessage() : 'Failed to retrieve a list of posts. An error occurred.';
+
+            return response()->json(['message' => $message], $codeStatus);
         }
     }
-
 }
