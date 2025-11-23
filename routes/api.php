@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -24,4 +25,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/posts/{post}', [PostController::class, 'update']);
     Route::delete('/posts/{post}', [PostController::class, 'delete']);
     Route::get('/posts/author/{user_id}', [PostController::class, 'getListByUser']);
+
+    // Comments
+    Route::post('/comments', [CommentController::class, 'create']);
+    Route::get('/comments/user/{user_id}', [CommentController::class, 'getListByUser']);
 });
