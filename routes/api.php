@@ -17,8 +17,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('users', UserController::class);
 
     // Posts routes
-    Route::post('/posts/{id}', [PostController::class, 'get']);
+    Route::get('/posts/{post}', [PostController::class, 'get']);
     Route::post('/posts', [PostController::class, 'create']);
-    Route::post('/posts/{id}', [PostController::class, 'update']);
-    Route::get('/posts/author/{author}', [PostController::class, 'getListByUser']);
+    Route::put('/posts/{post}', [PostController::class, 'update']);
+    Route::patch('/posts/{post}', [PostController::class, 'update']);
+    Route::delete('/posts/{post}', [PostController::class, 'delete']);
+    Route::get('/posts/author/{user}', [PostController::class, 'getListByUser']);
 });
