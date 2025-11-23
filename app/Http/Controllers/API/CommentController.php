@@ -36,7 +36,7 @@ class CommentController extends Controller
         } catch (Throwable $e) {
             DB::rollBack();
 
-            logger($e->getMessage());
+            logger()->error($e->getMessage());
 
             return response()->json(['message' => 'Failed to create new comment. An error occurred.'], 500);
         }
@@ -46,7 +46,7 @@ class CommentController extends Controller
      * Get a list of user comments
      *
      * @param int $user_id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getListByUser(int $user_id)
     {
