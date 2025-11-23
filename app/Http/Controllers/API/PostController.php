@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PostCreateRequest;
 use App\Http\Requests\PostListByUserRequest;
+use App\Http\Requests\PostListRequest;
 use App\Http\Requests\PostUpdateRequest;
 use App\Models\Post;
 use App\Models\Tag;
@@ -80,6 +81,8 @@ class PostController extends Controller
                 $post->tags()->sync($validated['tags']);
             }
 
+            $post->save();
+
             DB::commit();
 
             $response = ['post' => $post];
@@ -119,6 +122,59 @@ class PostController extends Controller
             logger()->error($e->getMessage());
 
             return response()->json(['message' => 'Post was not deleted. An error occurred.'], 500);
+        }
+    }
+
+    /**
+     * Get a list of all posts, filter results by author, category and/or tags
+     *
+     * @param PostListRequest $request
+     *
+     * @return JsonResponse
+     */
+    public function getList(PostListRequest $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $query = Post::query();
+
+            // Apply filters conditionally
+            if (!empty($request->validated(['filter_by']))) {
+                // Retrieve filter values
+                $filterBy = $request->validated(['filter_by']);
+
+                // Filter by author
+                if (isset($filterBy['author_id'])) {
+                    $query->where('author', '=', $filterBy['author_id']);
+                }
+
+                // Filter by category
+                if (isset($filterBy['category_id'])) {
+                    $query->where('category_id', '=', $filterBy['category_id']);
+                }
+
+                // Filter by tags
+                if (isset($filterBy['tags'])) {
+                    $tags[] = implode(',', $filterBy['tags']);
+                    $query->whereHas('tags', function ($query) use ($tags) {
+                        $query->whereIn('tags.id', $tags);
+                    });
+                }
+            }
+
+            // Get posts with relationships
+            $posts = $query->with(['author', 'category', 'tags'])->get();
+
+            DB::commit();
+
+            return response()->json($posts, 200);
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            logger()->error($e->getMessage());
+
+            return response()->json(['message' => 'An error occurred. Failed to retrieve posts.'], 500);
         }
     }
 
