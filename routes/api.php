@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\UserController;
@@ -29,4 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Comments
     Route::post('/comments', [CommentController::class, 'create']);
     Route::get('/comments/user/{user_id}', [CommentController::class, 'getListByUser']);
+
+    // Categories
+    Route::get('/categories', [CategoryController::class, 'getList']);
 });
