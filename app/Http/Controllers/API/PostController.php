@@ -42,9 +42,7 @@ class PostController extends Controller
 
             DB::commit();
 
-            $response = ['post' => $post];
-
-            return response()->json($response, 201);
+            return response()->json($post, 201);
         } catch (Throwable $e) {
             DB::rollBack();
 
@@ -86,9 +84,7 @@ class PostController extends Controller
 
             DB::commit();
 
-            $response = ['post' => $post];
-
-            return response()->json($response, 200);
+            return response()->json($post, 200);
         } catch (Throwable $e) {
             DB::rollBack();
 
