@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CommentCreateRequest;
 use App\Models\Comment;
+use App\Notifications\NewComment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -32,13 +33,16 @@ class CommentController extends Controller
 
             DB::commit();
 
+            // Notify post owner about the new comment
+            $comment->notify(new NewComment($comment));
+
             return response()->json($comment, 200);
         } catch (Throwable $e) {
             DB::rollBack();
 
             logger()->error($e->getMessage());
 
-            return response()->json(['message' => 'Failed to create new comment. An error occurred.'], 500);
+            return response()->json(['message' => 'An error occurred.'], 500);
         }
     }
 
